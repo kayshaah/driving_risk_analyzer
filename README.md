@@ -21,18 +21,10 @@ The Intelligent Driving Behavior Risk Analyzer is a Python GUI application that 
 ## How to run
 
 1. Install dependencies:
-
-'''bash
 python3 -m pip install -r requirements.txt
-'''
 
 2. Launch the app:
-
-'''bash
 python3 main.py
-'''
-
-
 
 ## CSV sensor format
 
@@ -70,9 +62,7 @@ Each row represents one timestamped sensor reading for a driving session.
 
 ## Running tests
 
-'''bash
 python3 -m pytest
-'''
 
 ## Expansion ideas (Future Scope)
 
