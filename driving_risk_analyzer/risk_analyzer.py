@@ -311,3 +311,9 @@ class RiskAnalyzer:
             recommendations.append("Large speed swings were detected. Try maintaining a steadier pace.")
 
         return recommendations
+
+    def _count_event_bursts(self, condition: pd.Series) -> int:
+        """Count event bursts instead of every consecutive row in the burst."""
+        active = condition.fillna(False).astype(bool)
+        starts = active & ~active.shift(1, fill_value=False)
+        return int(starts.sum())
