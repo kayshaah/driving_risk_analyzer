@@ -1,6 +1,4 @@
-"""
-Data model for a summarized driving session.
-"""
+"""Data model for a summarized driving session."""
 
 from __future__ import annotations
 
@@ -9,7 +7,7 @@ from dataclasses import dataclass
 
 @dataclass(slots=True)
 class DrivingSession:
-    """Store high level information about one driving session."""
+    """Store high-level information about one driving session."""
 
     session_id: str
     start_time_sec: float
