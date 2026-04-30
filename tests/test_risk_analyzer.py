@@ -1,20 +1,23 @@
-"""Pytest Tests for driving data loading and risk analysis."""
+"""Tests for driving data loading and risk analysis."""
 
-from _future_ import annotations
+from __future__ import annotations
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
+import zipfile
 
 import pandas as pd
 import pytest
 
 from driving_risk_analyzer.dataset_manager import DatasetManager
+from driving_risk_analyzer.report_exporter import write_html_report
 from driving_risk_analyzer.risk_analyzer import RiskAnalyzer, SimpleRiskKNN
 
 
 @pytest.fixture
 def data_paths() -> dict[str, Path]:
     """Provide paths to bundled sample data files."""
-    project_root = Path(_file_).resolve().parents[1]
+    project_root = Path(__file__).resolve().parents[1]
     return {
         "sensor_csv": project_root / "data" / "sample_driving_sensor_data.csv",
         "reference_csv": project_root / "data" / "risk_reference_profiles.csv",
@@ -131,3 +134,71 @@ def test_missing_required_column_raises_error() -> None:
     )
     with pytest.raises(ValueError, match="missing required columns"):
         DatasetManager(bad_frame)
+
+
+def test_sensor_logger_zip_loads_as_normalized_dataset() -> None:
+    """Sensor Logger ZIP exports should load through the same dataset path."""
+    with TemporaryDirectory() as temp_dir:
+        zip_path = Path(temp_dir) / "test_drive.zip"
+        with zipfile.ZipFile(zip_path, "w") as archive:
+            archive.writestr(
+                "Accelerometer.csv",
+                "\n".join(
+                    [
+                        "time,seconds_elapsed,z,y,x",
+                        "1000,0.0,0.1,0.2,0.3",
+                        "1010,0.1,0.2,0.3,0.4",
+                        "1020,0.2,0.3,0.4,0.5",
+                    ]
+                ),
+            )
+            archive.writestr(
+                "Gyroscope.csv",
+                "\n".join(
+                    [
+                        "time,seconds_elapsed,z,y,x",
+                        "1000,0.0,1.1,1.2,1.3",
+                        "1010,0.1,1.2,1.3,1.4",
+                        "1020,0.2,1.3,1.4,1.5",
+                    ]
+                ),
+            )
+            archive.writestr(
+                "Location.csv",
+                "\n".join(
+                    [
+                        "time,seconds_elapsed,altitude,speedAccuracy,bearingAccuracy,latitude,altitudeAboveMeanSeaLevel,bearing,horizontalAccuracy,verticalAccuracy,longitude,speed",
+                        "1000,0.0,0,1,1,40,0,0,5,5,-74,-1",
+                        "1010,0.1,0,1,1,40,0,0,5,5,-74,10",
+                        "1020,0.2,0,1,1,40,0,0,5,5,-74,12",
+                    ]
+                ),
+            )
+
+        manager = DatasetManager.from_zip(zip_path)
+        assert manager.session_ids == ["test_drive"]
+
+        frame = manager.get_session_frame("test_drive")
+        assert list(frame.columns) == DatasetManager.REQUIRED_COLUMNS
+        assert len(frame) == 3
+        assert frame["speed_kmh"].tolist() == pytest.approx([36.0, 36.0, 43.2])
+
+
+def test_html_report_export_contains_dashboard_sections(
+    dataset_manager: DatasetManager,
+    risk_analyzer: RiskAnalyzer,
+) -> None:
+    """Exported reports should include the major dashboard sections."""
+    session = dataset_manager.build_session("202")
+    result = risk_analyzer.analyze_session(dataset_manager.get_session_frame("202"))
+
+    with TemporaryDirectory() as temp_dir:
+        output_path = Path(temp_dir) / "driveguard_report.html"
+        write_html_report(output_path, session, result)
+        report_html = output_path.read_text(encoding="utf-8")
+
+    assert "DriveGuard Driving Risk Report" in report_html
+    assert "Risk Score" in report_html
+    assert "Event Breakdown" in report_html
+    assert "Extracted Features" in report_html
+    assert "Recommendations" in report_html
