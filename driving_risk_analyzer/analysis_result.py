@@ -1,6 +1,4 @@
-"""
-Result object produced by the risk analyzer.
-"""
+"""Result object produced by the risk analyzer."""
 
 from __future__ import annotations
 
@@ -9,7 +7,7 @@ from dataclasses import dataclass
 
 @dataclass(slots=True)
 class RiskAnalysisResult:
-    """Store detailed analysis output for one driving session"""
+    """Store detailed analysis output for one driving session."""
 
     heuristic_score: float
     heuristic_label: str
