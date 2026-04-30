@@ -1,6 +1,4 @@
-"""
-Feature extraction, heuristic scoring, and KNN-style risk prediction.
-"""
+"""Feature extraction, heuristic scoring, and KNN-style risk prediction."""
 
 from __future__ import annotations
 
@@ -108,7 +106,7 @@ class SimpleRiskKNN:
 
 
 class RiskAnalyzer:
-    """Compute driver risk features and produce risk predictions."""
+    """Compute driver-risk features and produce risk predictions."""
 
     LABEL_TO_LEVEL = {"safe": 1, "moderate": 2, "high": 3}
     LEVEL_TO_LABEL = {1: "safe", 2: "moderate", 3: "high"}
@@ -292,7 +290,7 @@ class RiskAnalyzer:
         feature_values: dict[str, float],
         final_label: str,
     ) -> list[str]:
-        """Generate suggestions based on the extracted features."""
+        """Generate user-facing suggestions based on the extracted features."""
         recommendations: list[str] = []
 
         if feature_values["harsh_braking_events"] > 0:
