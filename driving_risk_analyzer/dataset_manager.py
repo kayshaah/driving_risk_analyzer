@@ -1,6 +1,4 @@
-"""
-CSV loading and session management for driving sensor data.
-"""
+"""CSV loading and session management for driving sensor data."""
 
 from __future__ import annotations
 
@@ -9,6 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from driving_risk_analyzer.driving_session import DrivingSession
+from driving_risk_analyzer.sensor_logger_importer import load_sensor_logger_zip
 
 
 class DatasetManager:
@@ -37,6 +36,13 @@ class DatasetManager:
         csv_path = Path(csv_path)
         frame = pd.read_csv(csv_path)
         return cls(frame, source_name=csv_path.name)
+
+    @classmethod
+    def from_zip(cls, zip_path: str | Path) -> "DatasetManager":
+        """Load sensor data from a Sensor Logger ZIP export."""
+        zip_path = Path(zip_path)
+        frame = load_sensor_logger_zip(zip_path)
+        return cls(frame, source_name=zip_path.name)
 
     @property
     def frame(self) -> pd.DataFrame:
@@ -69,7 +75,7 @@ class DatasetManager:
         )
 
     def _prepare_frame(self, frame: pd.DataFrame) -> pd.DataFrame:
-        """Validate columns and normalize types for analysis"""
+        """Validate columns and normalize types for downstream analysis."""
         working = frame.copy()
         missing_columns = [
             column for column in self.REQUIRED_COLUMNS if column not in working.columns
